@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8" />
+	<title>WebCam</title>
+	<script src="//code.jquery.com/jquery-2.2.1.min.js"></script>
+	<script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+<button onclick="view(); return false">View Retour</button>
+<button onclick="stream(); return false">Stream..</button>
+	<div id="logger"></div>
+	<video style="display: none;" id="video"> </video>
+    <canvas id="prev"></canvas>
+    <br>
+    <p>Retour Serveur</p>
+	<img id="img" width="500" height="350">
+
+    
+
+	<script>
+    var socket = io();
+
+	function logger(msg) {
+		$("#logger").text(msg);
+    }
+    
+    function view() {
+        //logger("Wait...");
+        socket.on("streamRetour", function (video) {
+            var img = document.querySelector("#img");
+            img.src = video;
+            //logger("stream play");
+        });
+    }
+
+	function stream() {
+		var canv = document.getElementById("prev"),
+		context = canv.getContext("2d"),
+		video = document.getElementById("video"),
+		freq = 16;
+
+		canv.width = 500 ;//  800;
+		canv.height = 350;// 400;
+		
+		context.width = canv.width;
+		context.height = canv.height;
+
+		
+		function viewVideo(video, context) {
+			context.drawImage(video, 0, 0, context.width, context.height);
+			socket.emit("stream", canv.toDataURL("image/webp"));
+        }
+	
+		$(function() {                         
+			navigator.mediaDevices.getUserMedia({ video: true, audio: false })
+                .then(localMediaStream => {
+                    video.src = window.URL.createObjectURL(localMediaStream);
+                })
+                .catch(err => {
+                    console.error(`OH NO!!!`, err);
+                });
+			setInterval(function() {
+                viewVideo(video, context);
+            }, freq);
+		});
+	}
+
+	
+	</script>
+</body>
+</html>
